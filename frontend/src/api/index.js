@@ -57,3 +57,18 @@ export const expenseAPI = {
       body: JSON.stringify({ budget }),
     }).then((r) => r.json()),
 };
+export const aiAPI = {
+  getInsights: (data) =>
+    fetch(`${BASE}/ai/insights`, {
+      method: "POST",
+      headers: headers(),
+      body: JSON.stringify(data),
+    }).then((r) => r.json()),
+
+  chat: (data) =>
+    fetch(`${BASE}/ai/chat`, {
+      method: "POST",
+      headers: headers(),
+      body: JSON.stringify(data),
+    }).then((r) => r.json()),
+};
