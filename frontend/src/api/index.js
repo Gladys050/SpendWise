@@ -7,68 +7,92 @@ const headers = () => ({
   Authorization: `Bearer ${getToken()}`,
 });
 
+const parseJson = async (response) => {
+  const text = await response.text();
+  if (!text) return {};
+  try {
+    return JSON.parse(text);
+  } catch {
+    return { message: text };
+  }
+};
+
+const request = async (path, options = {}) => {
+  try {
+    const response = await fetch(`${BASE}${path}`, {
+      mode: "cors",
+      headers: headers(),
+      ...options,
+    });
+    const data = await parseJson(response);
+    if (response.ok) {
+      return data;
+    }
+    return {
+      success: false,
+      message: data.message || `${response.status} ${response.statusText}`,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      message: "Unable to reach the API server.",
+    };
+  }
+};
+
 export const authAPI = {
   register: (data) =>
-    fetch(`${BASE}/auth/register`, {
+    request("/auth/register", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
-    }).then((r) => r.json()),
+    }),
 
   login: (data) =>
-    fetch(`${BASE}/auth/login`, {
+    request("/auth/login", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
-    }).then((r) => r.json()),
+    }),
 
-  me: () =>
-    fetch(`${BASE}/auth/me`, { headers: headers() }).then((r) => r.json()),
+  me: () => request("/auth/me"),
 };
 
 export const expenseAPI = {
-  getAll: () =>
-    fetch(`${BASE}/expenses`, { headers: headers() }).then((r) => r.json()),
+  getAll: () => request("/expenses"),
 
   add: (data) =>
-    fetch(`${BASE}/expenses`, {
+    request("/expenses", {
       method: "POST",
-      headers: headers(),
       body: JSON.stringify(data),
-    }).then((r) => r.json()),
+    }),
 
   delete: (id) =>
-    fetch(`${BASE}/expenses/${id}`, {
+    request(`/expenses/${id}`, {
       method: "DELETE",
-      headers: headers(),
-    }).then((r) => r.json()),
+    }),
 
   update: (id, data) =>
-    fetch(`${BASE}/expenses/${id}`, {
+    request(`/expenses/${id}`, {
       method: "PUT",
-      headers: headers(),
       body: JSON.stringify(data),
-    }).then((r) => r.json()),
+    }),
 
   updateBudget: (budget) =>
-    fetch(`${BASE}/expenses/budget`, {
+    request("/expenses/budget", {
       method: "PUT",
-      headers: headers(),
       body: JSON.stringify({ budget }),
-    }).then((r) => r.json()),
+    }),
 };
+
 export const aiAPI = {
   getInsights: (data) =>
-    fetch(`${BASE}/ai/insights`, {
+    request("/ai/insights", {
       method: "POST",
-      headers: headers(),
       body: JSON.stringify(data),
-    }).then((r) => r.json()),
+    }),
 
   chat: (data) =>
-    fetch(`${BASE}/ai/chat`, {
+    request("/ai/chat", {
       method: "POST",
-      headers: headers(),
       body: JSON.stringify(data),
-    }).then((r) => r.json()),
+    }),
 };

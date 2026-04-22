@@ -24,23 +24,40 @@ export function AuthProvider({ children }) {
   }, []);
 
   const login = async (email, password) => {
-    const data = await authAPI.login({ email, password });
-    if (data.token) {
-      localStorage.setItem("token", data.token);
-      setUser(data.user);
-      return { success: true };
+    try {
+      const data = await authAPI.login({ email, password });
+      if (data.token) {
+        localStorage.setItem("token", data.token);
+        setUser(data.user);
+        return { success: true };
+      }
+      return { success: false, message: data.message || "Login failed." };
+    } catch (error) {
+      return {
+        success: false,
+        message: "Unable to connect to the server. Please try again later.",
+      };
     }
-    return { success: false, message: data.message };
   };
 
   const register = async (name, email, password) => {
-    const data = await authAPI.register({ name, email, password });
-    if (data.token) {
-      localStorage.setItem("token", data.token);
-      setUser(data.user);
-      return { success: true };
+    try {
+      const data = await authAPI.register({ name, email, password });
+      if (data.token) {
+        localStorage.setItem("token", data.token);
+        setUser(data.user);
+        return { success: true };
+      }
+      return {
+        success: false,
+        message: data.message || "Registration failed.",
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: "Unable to connect to the server. Please try again later.",
+      };
     }
-    return { success: false, message: data.message };
   };
 
   const logout = () => {
