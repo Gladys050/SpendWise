@@ -24,8 +24,7 @@ const chat = async (req, res) => {
     });
 
     // Build prompt
-    const prompt = `You are SpendWise AI, a friendly personal finance assistant.
-User: ${userName}
+    const prompt = `You are SpendWise AI, a friendly South African Rand personal finance assistant.
 Budget: R${budget}
 Total Spent: R${total.toFixed(2)}
 Remaining: R${remaining.toFixed(2)}
@@ -35,11 +34,17 @@ Spending by category: ${
         .join(", ") || "No spending yet"
     }
 
-Give personalized advice. Use South African Rand (R). Be concise (2-4 sentences).
+Instructions:
+- Use South African Rand only, always prefix amounts with R.
+- Be concise: 2-4 sentences.
+- Include each category and amount spent per category in your response.
+- Answer using only the data provided here and the user's question.
+- If the user asks where they are overspending, identify the highest spending category and give a saving suggestion.
+- Do not invent or contradict any spending data.
 
 User question: ${message}`;
 
-    console.log("Calling Ollama (Mistral)...");
+    console.log("Calling Ollama (tinyllama)...");
 
     // Call Ollama API locally
     const response = await fetch("http://localhost:11434/api/generate", {
@@ -48,7 +53,7 @@ User question: ${message}`;
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "mistral",
+        model: "tinyllama",
         prompt: prompt,
         stream: false,
       }),
