@@ -331,6 +331,7 @@ export default function AuthPage() {
   const [form, setForm] = useState({ name: "", email: "", password: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPw, setShowPw] = useState(false);
   const { login, register } = useAuth();
 
   const set = (field) => (e) =>
@@ -395,14 +396,33 @@ export default function AuthPage() {
               </div>
               <div className="sw-field">
                 <label className="sw-label">Password</label>
-                <input
-                  className="sw-input"
-                  type="password"
-                  placeholder="••••••••"
-                  value={form.password}
-                  onChange={set("password")}
-                  onKeyDown={onKey}
-                />
+                <div style={{ position: "relative" }}>
+                  <input
+                    className="sw-input"
+                    type={showPw ? "text" : "password"}
+                    placeholder="••••••••"
+                    value={form.password}
+                    onChange={set("password")}
+                    onKeyDown={onKey}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPw((p) => !p)}
+                    style={{
+                      position: "absolute",
+                      right: "0.75rem",
+                      top: "50%",
+                      transform: "translateY(-50%)",
+                      background: "none",
+                      border: "none",
+                      cursor: "pointer",
+                      color: "#2A4A38",
+                      fontSize: "0.85rem",
+                    }}
+                  >
+                    {showPw ? "Hide" : "Show"}
+                  </button>
+                </div>
               </div>
 
               <button className="sw-btn" onClick={submit} disabled={loading}>
@@ -457,14 +477,33 @@ export default function AuthPage() {
               </div>
               <div className="sw-field">
                 <label className="sw-label">Password</label>
-                <input
-                  className="sw-input"
-                  type="password"
-                  placeholder="min. 6 characters"
-                  value={form.password}
-                  onChange={set("password")}
-                  onKeyDown={onKey}
-                />
+                <div style={{ position: "relative" }}>
+                  <input
+                    className="sw-input"
+                    type={showPw ? "text" : "password"}
+                    placeholder="min. 6 characters"
+                    value={form.password}
+                    onChange={set("password")}
+                    onKeyDown={onKey}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPw((p) => !p)}
+                    style={{
+                      position: "absolute",
+                      right: "0.75rem",
+                      top: "50%",
+                      transform: "translateY(-50%)",
+                      background: "none",
+                      border: "none",
+                      cursor: "pointer",
+                      color: "#2A4A38",
+                      fontSize: "0.85rem",
+                    }}
+                  >
+                    {showPw ? "Hide" : "Show"}
+                  </button>
+                </div>
               </div>
 
               <button className="sw-btn" onClick={submit} disabled={loading}>
@@ -480,13 +519,48 @@ export default function AuthPage() {
 
           {/* OVERLAY SIDE */}
           <div className="sw-overlay">
-            <div className="sw-stat sw-stat-1">📈 +24% this month</div>
-            <div className="sw-stat sw-stat-2">💰 R12,450 saved</div>
-
             <div className="sw-overlay-logo">
               Spend<span>Wise</span>
             </div>
             <div className="sw-overlay-tagline">Smart Money Management</div>
+
+            <ul
+              style={{
+                listStyle: "none",
+                marginTop: "1rem",
+                display: "flex",
+                flexDirection: "column",
+                gap: "0.5rem",
+              }}
+            >
+              <li
+                style={{
+                  fontSize: "0.78rem",
+                  color: "rgba(2,15,6,0.7)",
+                  fontWeight: 600,
+                }}
+              >
+                ✓ Track expenses by category
+              </li>
+              <li
+                style={{
+                  fontSize: "0.78rem",
+                  color: "rgba(2,15,6,0.7)",
+                  fontWeight: 600,
+                }}
+              >
+                ✓ Set and manage monthly budgets
+              </li>
+              <li
+                style={{
+                  fontSize: "0.78rem",
+                  color: "rgba(2,15,6,0.7)",
+                  fontWeight: 600,
+                }}
+              >
+                ✓ AI-powered spending insights
+              </li>
+            </ul>
 
             {mode === "login" ? (
               <>

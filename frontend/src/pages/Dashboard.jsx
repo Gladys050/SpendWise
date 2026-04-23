@@ -36,12 +36,14 @@ function DonutChart({ slices, total, small }) {
     sw = small ? 12 : 28;
   const circ = 2 * Math.PI * r;
   let off = 0;
-  const arcs = (slices || []).map((s) => {
-    const dash = (Math.max(s.pct, 0) / 100) * circ;
-    const a = { ...s, dash, gap: circ - dash, off };
-    off += dash;
-    return a;
-  });
+  const arcs = (slices?.length ? slices : [{ color: "#F1F5F9", pct: 100 }]).map(
+    (s) => {
+      const dash = (Math.max(s.pct, 0) / 100) * circ;
+      const a = { ...s, dash, gap: circ - dash, off };
+      off += dash;
+      return a;
+    },
+  );
   return (
     <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
       <circle
@@ -236,7 +238,8 @@ function Insights({ expenses, budget }) {
 
   const now = new Date();
   const thisMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
-  const lastMonth = `${now.getFullYear()}-${String(now.getMonth()).padStart(2, "0")}`;
+  const prevDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const lastMonth = `${prevDate.getFullYear()}-${String(prevDate.getMonth() + 1).padStart(2, "0")}`;
   const thisMCats = {},
     lastMCats = {};
   expenses.forEach((e) => {
@@ -368,11 +371,10 @@ function Insights({ expenses, budget }) {
 }
 
 // ── AI Chat ──────────────────────────────────────────────────
-function AIAdvisor({ expenses, budget, user }) {
+function AIAdvisor({ expenses, budget, user, aiOpen, setAiOpen }) {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const [open, setOpen] = useState(false);
   const bottomRef = useRef(null);
 
   const total = expenses.reduce((s, e) => s + parseFloat(e.amount), 0);
@@ -399,7 +401,7 @@ Transactions: ${expenses.length} | Recent: ${expenses
 Rules: Give personalized advice based ONLY on this data. Use South African Rand (R). Be concise (2-4 sentences). Tell user when they have spare money or are overspending. Never make up data.`;
 
   useEffect(() => {
-    if (open && messages.length === 0) {
+    if (aiOpen && messages.length === 0) {
       const pct = Math.min((total / budget) * 100, 100).toFixed(1);
       const name = user?.name?.split(" ")[0];
       let greeting;
@@ -411,7 +413,7 @@ Rules: Give personalized advice based ONLY on this data. Use South African Rand 
         greeting = `Hey ${name} 👋 You've used ${pct}% of your budget with **R${remaining.toFixed(2)}** left. Your top spending is **${topCatName}**. Want saving tips or a spending breakdown?`;
       setMessages([{ role: "assistant", text: greeting }]);
     }
-  }, [open]);
+  }, [aiOpen]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -426,19 +428,22 @@ Rules: Give personalized advice based ONLY on this data. Use South African Rand 
     try {
       const token = localStorage.getItem("token");
       console.log("Token being sent:", token);
-      const aiRes = await fetch("http://localhost:5000/api/ai/chat", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+      const aiRes = await fetch(
+        `${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/ai/chat`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            message: userMsg,
+            expenses,
+            budget,
+            userName: user?.name,
+          }),
         },
-        body: JSON.stringify({
-          message: userMsg,
-          expenses,
-          budget,
-          userName: user?.name,
-        }),
-      });
+      );
       const data = await aiRes.json();
       const reply = data.reply || "Sorry, I couldn't respond. Try again!";
       setMessages((prev) => [...prev, { role: "assistant", text: reply }]);
@@ -454,7 +459,7 @@ Rules: Give personalized advice based ONLY on this data. Use South African Rand 
   return (
     <>
       <button
-        onClick={() => setOpen((o) => !o)}
+        onClick={() => setAiOpen((o) => !o)}
         title="AI Finance Advisor"
         style={{
           position: "fixed",
@@ -475,17 +480,18 @@ Rules: Give personalized advice based ONLY on this data. Use South African Rand 
           transition: "transform 0.2s",
         }}
       >
-        {open ? "✕" : "🤖"}
+        {aiOpen ? "✕" : "🤖"}
       </button>
 
-      {open && (
+      {aiOpen && (
         <div
           style={{
             position: "fixed",
             bottom: "5.5rem",
             right: "1.5rem",
             width: "340px",
-            height: "490px",
+            height: "min(490px, calc(100vh - 8rem))",
+            maxHeight: "calc(100vh - 8rem)",
             background: "#fff",
             borderRadius: "20px",
             boxShadow: "0 20px 60px rgba(0,0,0,0.15)",
@@ -711,9 +717,13 @@ function AddModal({ onAdd, onClose }) {
     date: new Date().toISOString().slice(0, 10),
   });
   const [adding, setAdding] = useState(false);
+  const [formError, setFormError] = useState("");
 
   const submit = async () => {
-    if (!form.desc.trim() || !form.amount || +form.amount <= 0) return;
+    if (!form.desc.trim()) return setFormError("Please enter a description.");
+    if (!form.amount || +form.amount <= 0)
+      return setFormError("Please enter a valid amount.");
+    setFormError("");
     setAdding(true);
     await onAdd(form);
     setAdding(false);
@@ -870,6 +880,17 @@ function AddModal({ onAdd, onClose }) {
             ))}
           </select>
         </div>
+        {formError && (
+          <div
+            style={{
+              color: "#EF4444",
+              fontSize: "0.75rem",
+              marginBottom: "0.5rem",
+            }}
+          >
+            {formError}
+          </div>
+        )}
         <button
           onClick={submit}
           disabled={adding}
@@ -983,6 +1004,10 @@ export default function Dashboard() {
   const [catFilter, setCatFilter] = useState("all");
   const [budgetInput, setBudgetInput] = useState("");
   const [editingBudget, setEditingBudget] = useState(false);
+  const [aiOpen, setAiOpen] = useState(false);
+  const [loadError, setLoadError] = useState(null);
+  const [txPage, setTxPage] = useState(1);
+  const TX_PER_PAGE = 10;
 
   useEffect(() => {
     expenseAPI
@@ -990,6 +1015,7 @@ export default function Dashboard() {
       .then((data) => {
         if (Array.isArray(data)) setExpenses(data);
       })
+      .catch(() => setLoadError("Failed to load transactions. Please refresh."))
       .finally(() => setLoadingData(false));
   }, []);
 
@@ -1020,6 +1046,18 @@ export default function Dashboard() {
     [catTotals, total],
   );
 
+  const now = new Date();
+  const thisMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+  const prevDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const lastMonth = `${prevDate.getFullYear()}-${String(prevDate.getMonth() + 1).padStart(2, "0")}`;
+  const thisMonthCount = expenses.filter((e) =>
+    e.date?.startsWith(thisMonth),
+  ).length;
+  const lastMonthCount = expenses.filter((e) =>
+    e.date?.startsWith(lastMonth),
+  ).length;
+  const countUp = thisMonthCount >= lastMonthCount;
+
   const filtered = useMemo(
     () =>
       expenses.filter((e) => {
@@ -1029,6 +1067,8 @@ export default function Dashboard() {
       }),
     [expenses, search, catFilter],
   );
+
+  useEffect(() => setTxPage(1), [search, catFilter]);
 
   const addExpense = async (form) => {
     const data = await expenseAPI.add({
@@ -1041,6 +1081,8 @@ export default function Dashboard() {
   };
 
   const del = async (id) => {
+    if (!window.confirm("Delete this transaction? This cannot be undone."))
+      return;
     await expenseAPI.delete(id);
     setExpenses((prev) => prev.filter((e) => e.id !== id));
   };
@@ -1060,7 +1102,7 @@ export default function Dashboard() {
       "Description,Category,Date,Amount",
       ...expenses.map(
         (e) =>
-          `${e.description},${e.category},${e.date?.slice(0, 10)},${parseFloat(e.amount).toFixed(2)}`,
+          `"${e.description}","${e.category}",${e.date?.slice(0, 10)},${parseFloat(e.amount).toFixed(2)}`,
       ),
     ].join("\n");
     const a = document.createElement("a");
@@ -1121,8 +1163,6 @@ export default function Dashboard() {
           <div
             style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}
           >
-            <button className="db-icon-btn">🔔</button>
-            <button className="db-icon-btn">🔄</button>
             <div
               style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}
             >
@@ -1204,7 +1244,10 @@ export default function Dashboard() {
                 <div>
                   <div className="db-stat-label">Transactions</div>
                   <div className="db-stat-val">{expenses.length}</div>
-                  <span className="db-stat-badge up">↑ this month</span>
+                  <span className={`db-stat-badge ${countUp ? "up" : "dn"}`}>
+                    {countUp ? "↑" : "↓"}{" "}
+                    {Math.abs(thisMonthCount - lastMonthCount)} this month
+                  </span>
                 </div>
                 <div className="db-stat-icon" style={{ background: "#EFF6FF" }}>
                   💳
@@ -1215,8 +1258,8 @@ export default function Dashboard() {
             <div className="db-stat">
               <div className="db-stat-top">
                 <div style={{ flex: 1 }}>
-                  <div className="db-stat-label">Budget Remaining</div>
-                  <div className="db-stat-val">R{remaining.toFixed(0)}</div>
+                  <div className="db-stat-label">Monthly Budget</div>
+                  <div className="db-stat-val">R{budget}</div>
                   {editingBudget ? (
                     <div
                       style={{
@@ -1283,7 +1326,8 @@ export default function Dashboard() {
                       }}
                       onClick={() => setEditingBudget(true)}
                     >
-                      {budgetPct.toFixed(0)}% of R{budget} · Edit budget
+                      {budgetPct.toFixed(0)}% used · R{remaining.toFixed(2)}{" "}
+                      left · Edit budget
                     </div>
                   )}
                 </div>
@@ -1426,6 +1470,18 @@ export default function Dashboard() {
                 </select>
               </div>
 
+              {loadError && (
+                <div
+                  style={{
+                    color: "#EF4444",
+                    padding: "1rem",
+                    fontSize: "0.85rem",
+                  }}
+                >
+                  {loadError}
+                </div>
+              )}
+
               {filtered.length === 0 ? (
                 <div
                   style={{
@@ -1450,7 +1506,7 @@ export default function Dashboard() {
                     </tr>
                   </thead>
                   <tbody>
-                    {filtered.slice(0, 10).map((e) => {
+                    {filtered.slice(0, txPage * TX_PER_PAGE).map((e) => {
                       const cat =
                         CATEGORIES.find((c) => c.id === e.category) ||
                         CATEGORIES[6];
@@ -1511,6 +1567,14 @@ export default function Dashboard() {
                   </tbody>
                 </table>
               )}
+              {filtered.length > txPage * TX_PER_PAGE && (
+                <button
+                  onClick={() => setTxPage((p) => p + 1)}
+                  className="db-export-btn"
+                >
+                  Show more
+                </button>
+              )}
             </div>
 
             {/* Insights */}
@@ -1562,7 +1626,7 @@ export default function Dashboard() {
                   Get personalized money tips based on your real spending data.
                 </div>
                 <button
-                  onClick={() => {}}
+                  onClick={() => setAiOpen(true)}
                   style={{
                     background: "#22C55E",
                     color: "#fff",
@@ -1586,7 +1650,13 @@ export default function Dashboard() {
       {showModal && (
         <AddModal onAdd={addExpense} onClose={() => setShowModal(false)} />
       )}
-      <AIAdvisor expenses={expenses} budget={budget} user={user} />
+      <AIAdvisor
+        expenses={expenses}
+        budget={budget}
+        user={user}
+        aiOpen={aiOpen}
+        setAiOpen={setAiOpen}
+      />
     </>
   );
 }
