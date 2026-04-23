@@ -1,5 +1,4 @@
-const BASE_URL =
-  import.meta.env.VITE_API_URL || "https://spendwise-2f4i.onrender.com";
+const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 const BASE = `${BASE_URL}/api`;
 
 const getToken = () => localStorage.getItem("token");
