@@ -19,7 +19,7 @@ function AppContent() {
           fontSize: "0.8rem",
         }}
       >
-        // initializing...
+        initializing...
       </div>
     );
   }

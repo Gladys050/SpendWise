@@ -8,7 +8,11 @@ const aiRoutes = require("./routes/ai");
 
 const app = express();
 
-const allowedOrigins = ["http://localhost:5173", "http://localhost:5174"];
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://localhost:5174",
+  "https://spend-wise-lemon-two.vercel.app",
+];
 
 app.use(
   cors({

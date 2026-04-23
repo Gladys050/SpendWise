@@ -1,4 +1,8 @@
 require("dotenv").config();
+const { GoogleGenerativeAI } = require("@google/generative-ai");
+
+// Initialize Google AI
+const genAI = new GoogleGenerativeAI(process.env.GOOGLE_GEMINI_API_KEY);
 
 // ── CHAT FUNCTION ───────────────────────────────────────────
 const chat = async (req, res) => {
@@ -44,40 +48,24 @@ Instructions:
 
 User question: ${message}`;
 
-    console.log("Calling Ollama (tinyllama)...");
+    console.log("Calling Google Gemini AI...");
 
-    // Call Ollama API locally
-    const response = await fetch("http://localhost:11434/api/generate", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "tinyllama",
-        prompt: prompt,
-        stream: false,
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(
-        `Ollama API error: ${response.status} ${response.statusText}. Make sure Ollama is running on http://localhost:11434`,
-      );
-    }
-
-    const data = await response.json();
-    const reply = data.response?.trim();
+    // Call Google Gemini AI
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const reply = response.text().trim();
 
     if (!reply) {
-      throw new Error("No response from Ollama");
+      throw new Error("No response from Google AI");
     }
 
-    console.log("✅ Ollama reply:", reply);
+    console.log("✅ Google AI reply:", reply);
     res.json({ reply });
   } catch (err) {
     console.error("🔥 FULL ERROR:", err.message || err);
     res.status(500).json({
-      error: err.message || "Something went wrong",
+      error: err.message || "Something went wrong with AI processing",
     });
   }
 };
