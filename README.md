@@ -27,8 +27,8 @@ Monitor financial habits over time
 📅 Track expenses by date
 📊 Visual insights for better decision-making (charts/analytics — if added)
 🔍 Filter and view spending patterns (if implemented)
-🔐 User authentication (if implemented)
-☁️ Persistent data storage (if implemented)
+🔐 User authentication 
+☁️ Persistent data storage
 🛠 Tech Stack
 
 Frontend:
@@ -37,18 +37,12 @@ React
 JavaScript (ES6+)
 HTML5 & CSS3
 
-Backend (if applicable):
+Backend: Node.js
 
-Node.js
-Express
+Database : MYSQL
 
-Database (if applicable):
+Deployment: Vercel
 
-MYSQL
-
-Deployment:
-
-Vercel
 🧠 What I Learned
 Building scalable and reusable React components
 Managing application state effectively
@@ -63,7 +57,7 @@ Handling real-world data and user interactions
 
 🚀 Getting Started
 1. Clone the repository
-git clone https://github.com/YOUR_USERNAME/spendwise.git
+git clone https://github.com/gladys050/spendwise.git
 cd spendwise
 2. Install dependencies
 npm install
